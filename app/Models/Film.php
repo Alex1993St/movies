@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\File;
 use Illuminate\Database\Eloquent\Model;
 
 class Film extends Model
@@ -12,67 +13,13 @@ class Film extends Model
 
     const NOIMAGE = 'no_image.png';
 
-    public static function getAll($status)
-    {
-        return self::where('status', $status)->get();
-    }
-
-    public static function insertFilm($request)
-    {
-        if ($request->image) {
-            $imageName =  self::uploadImage($request);
-        } else {
-            $imageName = self::NOIMAGE;
-        }
-
-        $film_id = self::create([
-            'title' => $request->title,
-            'image' => $imageName,
-        ]);
-
-        if( $request->genre_id ) {
-            self::filmGenre($film_id->id, $request);
-        }
-    }
-
-    public static function deleteFilm($id)
-    {
-        $film = self::where('id', $id);
-        $image = $film->first();
-        if( $image->image != self::NOIMAGE ) {
-            self::removeFile($image->image);
-        }
-        $film->delete();
-
-        FilmGenre::where('film_id', $id)->delete();
-    }
-
+    /*
+     * Get param id
+     * Return film by id with genre
+     */
     public static function getFilm($id)
     {
-        return self::where('id', $id)->with('genres')->first();
-    }
-
-    public static function updateFilm($data)
-    {
-        if( $data->image ) {
-            $imageName =  self::uploadImage($data);
-            if( $data->old_image != self::NOIMAGE ) {
-                self::removeFile($data->old_image);
-            }
-        } else {
-            $imageName = $data->old_image;
-        }
-
-        if( $data->genre_id ) {
-            FilmGenre::where('film_id', $data->id)->delete();
-            self::filmGenre($data->id, $data);
-        }
-
-        self::where('id', $data->id)->update([
-            'title' => $data->title,
-            'status' => isset($data->status) ? 1 : 0,
-            'image' => $imageName,
-        ]);
+        return self::findById($id)->with('genres')->first();
     }
 
     public function genres()
@@ -80,44 +27,95 @@ class Film extends Model
         return $this->belongsToMany(Genre::class, 'film_genre', 'film_id', 'genre_id');
     }
 
+    /*
+     * Get param status
+     * Return films by status
+     */
+    public static function getAll($status)
+    {
+        return self::where('status', $status)->get();
+    }
+
+    /*
+     * Save film with genre
+     */
+    public static function insertFilm($request)
+    {
+        $imageName = $request->image ? app(File::class)->uploadImage($request) : self::NOIMAGE;
+        $film_id = self::create(['title' => $request->title, 'image' => $imageName,]);
+        if( $request->genre_id ) {
+            self::filmGenre($film_id->id, $request);
+        }
+    }
+
+    /*
+     * Update film with genre
+     */
+    public static function updateFilm($data)
+    {
+        $imageName = app(File::class)->actionFile($data);
+
+        if( $data->genre_id ) {
+            FilmGenre::findFilmById($data->id)->delete();
+            self::filmGenre($data->id, $data);
+        }
+
+        self::findById($data->id)->update([
+            'title' => $data->title,
+            'status' => isset($data->status) ? 1 : 0,
+            'image' => $imageName,
+        ]);
+    }
+
+    /*
+     * Delete film and his genre in FilmGenre model by id
+     */
+    public static function deleteFilm($id)
+    {
+        $film = self::findById($id);
+        $image = $film->first();
+        if( $image->image != self::NOIMAGE ) {
+            app(File::class)->removeFile($image->image);
+        }
+        $film->delete();
+
+        FilmGenre::findFilmById($id)->delete();
+    }
+
+    /*
+     * Checked selected genres
+     */
     public function isSelected($id)
     {
       return in_array($id, array_column($this->genres->toArray(), 'id')) ? 'selected' : '';
     }
 
+    /*
+     * Save genre and film relation
+     */
     private static function filmGenre($film_id, $data)
     {
-        $getGenresId = $data->genre_id;
-        $sizeOf = sizeof($getGenresId);
-        $batch = [];
-        for ( $i = 0; $i < $sizeOf; $i++ ) {
-            $batch[] = [
-                'film_id' => $film_id,
-                'genre_id' => $getGenresId[$i]
-            ];
-        }
-        FilmGenre::insert($batch);
+        FilmGenre::saveData($film_id, $data);
     }
 
+    /*
+     * Update status film
+     */
     public static function updateStatus($data)
     {
-        self::where('id', $data->id)->update(['status' => isset($data->status) ? 1 : 0]);
+        self::findById($data->id)->update(['status' => isset($data->status) ? 1 : 0]);
     }
 
-    public static function uploadImage($data)
-    {
-        $imageName = time() . '.' . $data->image->extension();
-        $data->image->move(storage_path('image'), $imageName);
-        return $imageName;
-    }
-
-    public static function removeFile($image)
-    {
-        unlink(storage_path('image') . '/'  . $image);
-    }
-
+    /*
+    * return pagination films
+    */
     public static function getAllWithPagination()
     {
         return self::paginate(10);
+    }
+
+    public static function scopeFindById($query, $id)
+    {
+        return $query->where('id', $id);
     }
 }

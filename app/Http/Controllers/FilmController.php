@@ -2,42 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\FilmRequest;
 use App\Models\Film;
 use App\Models\Genre;
-use Illuminate\Http\Request;
+
 
 class FilmController extends Controller
 {
+    /*
+     * Show films where status 1
+     */
     public function show()
     {
         $films = Film::getAll(1);
-
         return view('films.show', ['films' => $films]);
     }
 
+    /*
+    * Show form to create film
+    */
     public function create()
     {
         $genres = Genre::getAll();
-
         return view('films.create', ['genres' => $genres]);
     }
 
-    public function insert(Request $request)
+    /*
+    * Save new film
+    */
+    public function insert(FilmRequest $request)
     {
         if ($request) {
             Film::insertFilm($request);
             return redirect()->route('film');
         }
-
         return back();
     }
 
-    public function delete($id)
-    {
-        Film::deleteFilm($id);
-        return redirect()->route('film');
-    }
-
+    /*
+    * Show form to edit film
+    */
     public function edit($id)
     {
         $film = Film::getFilm($id);
@@ -45,28 +49,21 @@ class FilmController extends Controller
         return view('films.edit', ['genres' => $genres, 'film' => $film]);
     }
 
-    public function update(Request $request)
+    /*
+    * Update film by id
+    */
+    public function update(FilmRequest $request)
     {
         Film::updateFilm($request);
         return redirect()->route('film');
     }
 
-    public function status()
+    /*
+    * Delete film by id
+    */
+    public function delete($id)
     {
-        $films = Film::getAll(0);
-
-        return view('films.status', ['films' => $films]);
-    }
-
-    public function formUpdateStatus($id)
-    {
-        $film = Film::getFilm($id);
-        return view('films.update_status', ['film' => $film]);
-    }
-
-    public function updateStatus(Request $request)
-    {
-        Film::updateStatus($request);
+        Film::deleteFilm($id);
         return redirect()->route('film');
     }
 }

@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/films', 'ApiController@films');
-Route::get('/film/{id}', 'ApiController@filmId');
-Route::get('/genres', 'ApiController@genres');
-Route::get('/genre/{id}', 'ApiController@genreId');
+Route::get('/films', 'Api\ApiController@films');
+Route::get('/film/{id}', 'Api\ApiController@filmId');
+Route::get('/genres', 'Api\ApiController@genres');
+Route::get('/genre/{id}', 'Api\ApiController@genreId');
 
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {

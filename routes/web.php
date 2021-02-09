@@ -17,17 +17,17 @@ Route::get('/', 'HomeController@index');
 // FilmController
 Route::get('/film', 'FilmController@show');
 Route::get('/film/{id}', 'FilmController@index');
-
 Route::get('/film', 'FilmController@show')->name('film');
 Route::get('/create_film', 'FilmController@create');
 Route::post('/create_film', 'FilmController@insert');
 Route::post('/film_film', 'FilmController@update')->name('film_update');
 Route::get('/edit_film/{id}', 'FilmController@edit');
 Route::get('/delete_film/{id}', 'FilmController@delete');
-Route::get('/status', 'FilmController@status')->name('status');
-Route::get('/update_status/{id}', 'FilmController@formUpdateStatus');
-Route::post('/update_status', 'FilmController@updateStatus')->name('update_status');
 
+// ActionController
+Route::get('/status', 'ActionController@status')->name('status');
+Route::get('/update_status/{id}', 'ActionController@formUpdateStatus');
+Route::post('/update_status', 'ActionController@updateStatus')->name('update_status');
 
 
 // GenreController

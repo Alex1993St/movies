@@ -3,14 +3,19 @@
         {{ csrf_field() }}
         <input type="hidden" name="id" value="{{ $film->id }}">
         <input type="hidden" name="old_image" value="{{ $film->image }}">
-        <input type="text" name="title" value="{{ $film->title }}">
-        <select name="genre_id[]"  multiple>
+        <label>Title:</label>
+        <input type="text" name="title" value="{{ $film->title }}" required>
+        <label>Genre:</label>
+        <select name="genre_id[]"  multiple required>
             @foreach($genres as $genre)
                 <option value="{{ $genre->id }}" {{ $film->isSelected($genre->id) }}>{{ $genre->title }}</option>
             @endforeach
         </select>
+        <label>Is active:</label>
         <input type="checkbox" {{ $film->status ? 'checked' : '' }} name="status">
+        <label>Banner:</label>
         <input type="file" name="image">
         <input type="submit" value="Send">
     </form>
+    @include('errors.film')
 @endif
